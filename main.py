@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
+from datetime import datetime as dt
 
 def scale(image, label):
     image = tf.cast(image, tf.float32)
@@ -22,7 +23,30 @@ shuffled_train_and_validation_data = scaled_train_and_validation_data.shuffle(BU
 validation_data = shuffled_train_and_validation_data.take(number_of_validation_samples)
 train_data = shuffled_train_and_validation_data.skip(number_of_validation_samples)
 
-BATCH_SIZE = 100
+BATCH_SIZE = 250
 train_data = train_data.batch(BATCH_SIZE)
 validation_data = validation_data.batch(number_of_validation_samples)
 test_data = scaled_test_data.batch(number_of_test_samples)
+validation_inputs, validation_targets = next(iter(validation_data))
+
+input_size = 784
+output_size = 10
+hidden_layer_size = 200
+
+model = tf.keras.Sequential([
+                            tf.keras.layers.Flatten(input_shape=(28,28,1)),
+                            tf.keras.layers.Dense(hidden_layer_size, activation='relu'),
+                            tf.keras.layers.Dense(hidden_layer_size, activation='relu'),
+                            tf.keras.layers.Dense(hidden_layer_size, activation='relu'),
+                            tf.keras.layers.Dense(hidden_layer_size, activation='relu'),
+                            tf.keras.layers.Dense(output_size, activation='softmax')
+                            ])
+#custom_adam = tf.keras.optimizers.Adam(learning_rate=0.02)
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+
+print("Training Epochs:")
+NUM_OF_EPOCHS = 5
+model.fit(train_data, epochs=NUM_OF_EPOCHS, validation_data=(validation_inputs, validation_targets), verbose=2)
+
+print("\n" + "Evaluating Trained Model:")
+trian_loss, train_accuracy = model.evaluate(test_data)
